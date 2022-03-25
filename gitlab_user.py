@@ -15,12 +15,15 @@ class GitLabUser:
         self._gitlab = _gitlab
         self.userObject = None
 
-    def existsUser(self, username):
+    def existsUser(self, username, raise_err=False):
         """ 用户是否存在 """
         user = self.findUser(username)
         if user:
             self.userObject = user
             return True
+
+        if raise_err:
+            return Exception("User doesn't exist")
 
         return False
 

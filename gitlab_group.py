@@ -28,7 +28,7 @@ class GitLabGroup:
             if parent_group:
                 parent_id = self.getGroupId(parent_group)
             else:
-                raise Exception("parent don't exists")
+                raise Exception("Parent doesn't exist")
 
         if not self.existsGroup(name):
             # create new group

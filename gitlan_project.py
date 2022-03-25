@@ -69,12 +69,10 @@ class GitLabProject:
         """
         # user exist
         user = GitLabUser(self._gitlab)
-        if not user.existsUser(username):
-            return Exception("user not exist...")
+        user.existsUser(username, raise_err=True)
 
         # project exist
-        if not self.existProject(project_name):
-            return Exception("project not exist...")
+        self.existProject(project_name, raise_err=True)
 
         # user exist in project
         member = self.findMember(self.projectObject, username)
@@ -88,11 +86,53 @@ class GitLabProject:
                 member.access_level = access_level
                 member.save()
 
-    def existProject(self, name):
+    def createBranch(self, project_name, branch_name, ref):
+        """Create branch in the project
+
+        """
+        # project exist
+        self.existProject(project_name, raise_err=True)
+
+        # ref branch not exist
+        if not self.findBranch(self.projectObject, ref):
+            return Exception("Ref branch doesn't exist")
+
+        # branch exist
+        if not self.findBranch(self.projectObject, branch_name):
+            self.projectObject.branches.create({
+                'branch': branch_name,
+                'ref': ref
+            })
+
+    def deleteBranch(self, project_name, name):
+        """ Delete branch in the project
+
+        """
+        self.existProject(project_name, raise_err=True)
+
+        # delete
+        try:
+            self.projectObject.branches.delete(name)
+        except gitlab.GitlabDeleteError:
+            raise Exception("Branch doesn't exist")
+
+    @staticmethod
+    def findBranch(project, name):
+        branches = project.branches.list()
+        for branch in branches:
+            if branch.name == name:
+                return branch
+
+    def existProject(self, name, raise_err=False):
         project = self.findProject(name)
         if project:
             self.projectObject = project
             return True
+
+        if not project and raise_err:
+            # raise err
+            return Exception("Project doesn't exist")
+
         return False
 
     def deleteProject(self, name):
@@ -139,7 +179,11 @@ if __name__ == '__main__':
     # gitlab_project.createProjectForUser("zhangsan", "xws", project_args)
     # gitlab_project.createProjectForGroup("order_service", "xws", project_args)
     # gitlab_project.assignUserToProject("zhangsan", "fpcx", AccessLevel.Guest)
-    gitlab_project.deleteMember("zhangsan", "fpcx")
+    # gitlab_project.deleteMember("zhangsan", "fpcx")
+    # gitlab_project.createBranch("fpcx", "develop", "main")
+    gitlab_project.deleteBranch("fpcx", "develop")
+    # gitlab_project.createBranch("fpcx", "develop", "main")
+
 
     # group_args = dict(
     #     path="order_service",
